@@ -1,0 +1,29 @@
+﻿@model IEnumerable<OnlineQueue.Models.Queue>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Очередь для подогрева</h1>
+<table class="table">
+    <tr><th>Имя</th><th>Фамилия</th><th>Должность</th></tr>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Surname)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Position)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div>
+    <a class="btn btn-sm btn-success" asp-action="Write">Записаться</a>
+</div>
