@@ -17,7 +17,13 @@ namespace OnlineQueue.ViewModels
         [Required(ErrorMessage = "Не указан Email")]
         [Display(Name = "Email")]
         public string Email { get; set; }
-
+       
+        /// <summary>
+        /// Имя
+        /// </summary>
+        [Display(Name = "Name")]
+        [Required(ErrorMessage = "Error Name")]
+        public string Name { get; set; }
 
         /// <summary>
         /// Пароль

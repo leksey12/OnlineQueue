@@ -8,10 +8,10 @@ using System.Text;
 
 namespace DAL_OnlineQueue.EFContext
 {
-    public class ApplicationDbContext : IdentityDbContext<UserData>
+    public class ApplicationDbContext : DbContext
     {
-        public DbSet<QueueData> Queue { get; set; }
-        public DbSet<UserData> User { get; set; }
+        public DbSet<QueueData> Queues { get; set; }
+        public DbSet<UserData> Users { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

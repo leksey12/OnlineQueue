@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace BLL_OnlineQueue.Models
@@ -9,24 +10,20 @@ namespace BLL_OnlineQueue.Models
     /// </summary>
     public class QueueBusiness
     {
-        /// <summary>
-        /// Идентификатор 
-        /// </summary>
+        [Key]
         public int Id { get; set; }
 
-        /// <summary>
-        /// Имя 
-        /// </summary>
-        public string Name { get; set; }
+        [Required]
+        public DateTime Date { get; set; }
 
-        /// <summary>
-        /// Фамилия
-        /// </summary>
-        public string Surname { get; set; }
+        [Required]
+        public int Microwave { get; set; }
 
-        /// <summary>
-        /// Должность
-        /// </summary>
-        public string Position { get; set; }
+        [Required]
+        public int Number { get; set; }
+        [Required]
+        public int UserId { get; set; }
+
+        public UserBusiness User { get; set; }
     }
 }

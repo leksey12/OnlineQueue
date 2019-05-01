@@ -1,8 +1,12 @@
-﻿@model OnlineQueue.ViewModels.RegisterViewModel
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@inject IHtmlLocalizer<SharedResources> SharedLocalizer
+@model OnlineQueue.ViewModels.RegisterViewModel
 @{
-    ViewBag.Title = "Регистрация нового пользователя";
+    Layout = "_Layout";
 }
-<h2>@ViewBag.Title.</h2>
+<h2>@SharedLocalizer["register"]</h2>
+<a asp-action="Login" asp-controller="Account">@SharedLocalizer["log in"]</a>
 @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
 {
     @Html.AntiForgeryToken()
@@ -33,7 +37,7 @@
     <hr />
     <div class="form-group">
         <div class="col-md-offset-2 col-md-10">
-            <input type="submit" class="btn btn-default" value="Регистрация" />
+            <input type="submit" class="btn btn-default" value="@SharedLocalizer["register"]" />
         </div>
     </div>
 }

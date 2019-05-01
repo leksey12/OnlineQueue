@@ -1,29 +1,41 @@
-﻿@model IEnumerable<OnlineQueue.Models.Queue>
-
-@{
-    ViewData["Title"] = "Index";
-}
-
-<h1>Очередь для подогрева</h1>
-<table class="table">
-    <tr><th>Имя</th><th>Фамилия</th><th>Должность</th></tr>
-    <tbody>
-        @foreach (var item in Model)
+﻿@model List<DAL_OnlineQueue.EFContext.Initialization_micro>
+@using DAL_OnlineQueue.EFContext
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<SharedResources> SharedLocalizer
+<h3>
+    @SharedLocalizer["schedule"] @Model.FirstOrDefault().Today.ToString("dd.MM.yyyy"),  
+</h3>
+<div class="container-fluid">
+    <div class="container center-block">
+        @foreach (Initialization_micro micro in Model)
         {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Surname)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Position)
-                </td>
-            </tr>
+            <div class="col-lg-3 col-md-3 col-sm-5 col-xs-10 table-bordered">
+                <h4> @(micro.Microwave + 1) @SharedLocalizer["micro"]</h4>
+                <form asp-action="Index" asp-controller="Queue">
+                    <input name="Date" hidden value="@micro.Today" />
+                    @for (int i = 1; i <= micro.count; i++)
+                    {
+                        bool free = micro.UserNames.ElementAt(i - 1).Equals("Свободно");
+                        string userName = micro.UserNames.ElementAtOrDefault(i - 1);
+                        string style = free ? "btn-default" : "btn-danger";
+                        <div class="table-bordered row @style">
+                            <div class="col-xs-3">@i</div>
+                            <div class="col-xs-3">@DateTime.Parse("12:00").AddMinutes(5 * (i - 1)).ToString("hh:mm")</div>
+                            @if (free)
+                            {
+                                <div class=" col-xs-3">
+                                    <input hidden type="text" name="MicroId" value="@micro.Microwave">
+                                    <button class="btn-success" type="submit" name="Number" value="@i">@SharedLocalizer["select"]</button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-xs-3">@((!free) ? SharedLocalizer["free"].Value : micro.UserNames.ElementAtOrDefault(i - 1))</div>
+                            }
+                        </div>
+                    }
+                </form>
+            </div>
         }
-    </tbody>
-</table>
-<div>
-    <a class="btn btn-sm btn-success" asp-action="Write">Записаться</a>
+    </div>
 </div>

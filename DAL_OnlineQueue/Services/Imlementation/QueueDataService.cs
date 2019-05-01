@@ -17,18 +17,18 @@ namespace DAL_OnlineQueue.Services.Imlementation
         }
         public IEnumerable<QueueData> GetAll()
         {
-            return db.Queue.ToList();
+            return db.Queues.ToList();
         }
 
         public async Task Write(QueueData queue)
         {
-            db.Queue.Add(queue);
+            db.Queues.Add(queue);
             await db.SaveChangesAsync();
         }
         public async Task DeleteAsync(int id)
         {
-            var queue = await db.Queue.FindAsync(id);
-            db.Queue.Remove(queue);
+            var queue = await db.Queues.FindAsync(id);
+            db.Queues.Remove(queue);
             await db.SaveChangesAsync();
         }
     }

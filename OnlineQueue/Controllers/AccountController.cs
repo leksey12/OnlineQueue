@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using DAL_OnlineQueue.EFContext;
 using DAL_OnlineQueue.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OnlineQueue.ViewModels;
 
 namespace OnlineQueue.Controllers
@@ -19,118 +21,95 @@ namespace OnlineQueue.Controllers
     [Authorize]
     public class AccountController : Controller
     {
-        private readonly UserManager<UserData> _userManager;
-        private readonly SignInManager<UserData> _signInManager;
+        private ApplicationDbContext db;
 
-        public AccountController(UserManager<UserData> userManager, SignInManager<UserData> signInManager)
+        public AccountController(ApplicationDbContext context)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            db = context;
         }
-
-        /// <summary>
-        /// Страница Регистрации
-        /// </summary>
-        /// <returns></returns>
         [HttpGet]
-        public IActionResult Register()
+        public IActionResult Login()
         {
+            if (User != null && User.Identity.IsAuthenticated)
+                return RedirectToAction("Index", "Home");
             return View();
         }
-
-        /// <summary>
-        /// Регистрирует
-        /// </summary>
-        /// <param name="model">переменная</param>
-        /// <returns></returns>
-        [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                UserData user = new UserData { Email = model.Email, UserName = model.Email};
-                // добавляем пользователя
-                var result = await _userManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    // установка куки
-                    await _signInManager.SignInAsync(user, false);
-                    return RedirectToAction("Index", "Home");
-                }
-                else
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        ModelState.AddModelError(string.Empty, error.Description);
-                    }
-                }
-            }
-            return View(model);
-        }
-
-        /// <summary>
-        /// Получает страницу входа на сайт
-        /// </summary>
-        [HttpGet]
-        public IActionResult Login(string returnUrl = null)
-        {
-            return View(new LoginViewModel { ReturnUrl = returnUrl });
-        }
-
-        /// <summary>
-        /// Вход на сайт
-        /// </summary>
-        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                /*var user = await _userManager.FindByNameAsync(model.Email);
+                // ищем юзера в  базе данных по логин+пароль
+                UserData user = await db.Users.FirstOrDefaultAsync(u => u.Email == model.Email && u.Password == model.Password);
+
+                //если находим
                 if (user != null)
                 {
-                    // проверяем, подтвержден ли email
-                    if (!await _userManager.IsEmailConfirmedAsync(user))
-                    {
-                        ModelState.AddModelError(string.Empty, "Вы не подтвердили свой email");
-                        return View(model);
-                    }
-                }*/
+                    //авторизуемся
+                    await Authenticate(user.Email);
+                    return RedirectToAction("Index", "Home");
+                }
+                ModelState.AddModelError("", "Некорректный логин/Пароль");
 
-                var result = //await _userService.PasswordSignIn(model.Email, model.Password, model.RememberMe);
-                    await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false);
-                if (result.Succeeded)
-                {
-                    // проверяем, принадлежит ли URL приложению
-                    if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                    {
-                        return Redirect(model.ReturnUrl);
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Home");
-                    }
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Неправильный логин или пароль");
-                }
             }
             return View(model);
         }
-
-        /// <summary>
-        /// Выход с сайта
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LogOff()
+        [HttpGet]
+        public IActionResult Register()
         {
-            // удаляем аутентификационные куки
-            await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
+            if (User != null && User.Identity.IsAuthenticated)
+                return RedirectToAction("Index", "Home");
+            return View();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            //проверяем модель
+            if (ModelState.IsValid)
+            {
+                // проверяем  логин в базе
+                UserData user = await db.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+
+                if (user == null)
+                {
+                    db.Users.Add(new UserData { Email = model.Email, Name = model.Name, Password = model.Password });
+                    await db.SaveChangesAsync();
+                    await Authenticate(model.Email);
+                    return RedirectToAction("Index", "Home");
+                }
+                else ModelState.AddModelError("BadLogin", "Этот логин уже занят, попробуйте другой");
+
+            }
+            else ModelState.AddModelError("BadModel", "Некорректные логин и(или) пароль");
+
+            return View(model);
+        }
+        private async Task Authenticate(string login)
+        {
+            //признаки авторизции 
+            var Claims = new List<Claim>
+            {
+               new Claim(ClaimsIdentity.DefaultNameClaimType, login)
+            };
+
+            //параметр для передачи в запрос для аутентификации по кукам
+            //~~формирует куку конкретного юзера зашифровывает, чтобы потом расшифровать 
+            //и определить что это тот самый юзер в new Claim(ClaimsIdentity.DefaultNameClaimType, login)
+            ClaimsIdentity id = new ClaimsIdentity(Claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+
+            //устанавливаем куки авторизованного юзера
+            //схема установлена в классе стартап 
+            //services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
+
+        }
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

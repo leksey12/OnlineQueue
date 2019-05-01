@@ -14,30 +14,21 @@ namespace OnlineQueue.Models
         /// <summary>
         /// Идентификатор
         /// </summary>
+        /// 
+        [Key]
         public int Id { get; set; }
 
-        /// <summary>
-        /// Имя 
-        /// </summary>
-        /// [Required(ErrorMessage = "Поле должно быть заполнено")]
-        [RegularExpression(@"[а-яa-zA-ZА-Я0-9]*", ErrorMessage = "Некорректное имя")]
-        [Display(Name = "Имя")]
-        public string Name { get; set; }
+        [Required]
+        public DateTime Date { get; set; }
 
-        /// <summary>
-        /// Фамилия
-        /// </summary>
-        [RegularExpression(@"[а-яa-zA-ZА-Я0-9]*", ErrorMessage = "Некорректная фамилия")]
-        [Display(Name = "Фамилия")]
-        public string Surname { get; set; }
+        [Required]
+        public int Microwave { get; set; }
 
-        /// <summary>
-        /// Должность
-        /// </summary>
-        [Required(ErrorMessage = "Данное поле должно быть заполнено")]
-        [StringLength(40, MinimumLength = 6, ErrorMessage = "Должность следует ввести от 5-20 символов.")]
-        [Display(Name = "Должность")]
-        public string Position { get; set; }
+        [Required]
+        public int Number { get; set; }
+        [Required]
+        public int UserId { get; set; }
 
+        public User User { get; set; }
     }
 }

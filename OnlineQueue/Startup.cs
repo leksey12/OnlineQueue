@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using BLL_OnlineQueue.Data;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -32,7 +34,6 @@ namespace OnlineQueue
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-         
             services.AddMvc();
             var connection = Configuration.GetConnectionString("DefaultConnection");
             services.AddEntityFrameworkNpgsql().AddDbContext<ApplicationDbContext>(opt =>
@@ -42,11 +43,33 @@ namespace OnlineQueue
             services.AddScoped<IUserService, UserService>();
             services.AddDataLibraryCollection(Configuration);
             services.AddBusinessLibraryCollection();
-            services.AddIdentity<UserData, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            /*services.AddIdentity<UserData, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();*/
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            // включаем схему аутенификации по кукам
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                    options.LoginPath = new PathString("/Account/Login")
+                );
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
+            services.AddMvc().AddDataAnnotationsLocalization(options =>
+            {
+                options.DataAnnotationLocalizerProvider =
+                    (type, factory)
+                        => factory.Create(typeof(SharedResources));
+            }).AddViewLocalization();
+            services.Configure<RequestLocalizationOptions>(options =>
+            {
+                var supportedCultures = new[]
+                {
+                    new CultureInfo("en"),
+                    new CultureInfo("ru")
+                };
+                options.DefaultRequestCulture = new RequestCulture("ru-RU");
+                options.SupportedCultures = supportedCultures;
+                options.SupportedUICultures = supportedCultures;
+            });
         }
-
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
